@@ -32,6 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# veritabanı + yüklenen görseller
+/data
+*.db
+*.db-journal
+
+# prisma üretilen istemci
+/src/generated
 
 # vercel
 .vercel

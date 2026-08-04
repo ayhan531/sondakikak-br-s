@@ -1,0 +1,59 @@
+# Render.com dağıtım tanımı — https://render.com/docs/blueprint-spec
+#
+# Önemli: Kalıcı disk (/var/data) yalnızca çalışma anında bağlanır, build
+# sırasında bağlı DEĞİLDİR. Bu yüzden migration'lar startCommand içinde,
+# ilk kurulum (yönetici/kategori/kaynak) ise uygulama açılışında yapılır.
+
+services:
+  - type: web
+    name: sondakikakibris
+    runtime: node
+    region: frankfurt # Kıbrıs'a en yakın Render bölgesi
+    plan: starter # Kalıcı disk için ücretli plan gerekir
+    branch: main
+
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+
+    # Veritabanı ve haber görselleri burada saklanır, deploy'larda silinmez
+    disk:
+      name: sondakika-data
+      mountPath: /var/data
+      sizeGB: 10
+
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+
+      - key: DATABASE_URL
+        value: file:/var/data/sondakika.db
+      - key: DATA_DIR
+        value: /var/data
+
+      # Alan adınızı bağladıktan sonra bunu güncelleyin
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://sondakikakibris.com
+      - key: NEXT_PUBLIC_SITE_NAME
+        value: Son Dakika Kıbrıs
+
+      # Render bu değerleri ilk deploy'da kendisi üretir
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+
+      # İlk yönetici hesabı (yalnızca veritabanı boşken oluşturulur).
+      # Şifreyi Render panelinden girin, buraya yazmayın.
+      - key: ADMIN_EMAIL
+        value: admin@sondakikakibris.com
+      - key: ADMIN_NAME
+        value: Site Yöneticisi
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # Uygulama içi zamanlayıcı: kaç dakikada bir haber çekilsin (en az 5)
+      - key: FETCH_INTERVAL_MINUTES
+        value: "15"

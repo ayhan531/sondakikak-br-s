@@ -1,0 +1,239 @@
+// Son Dakika Kıbrıs — veritabanı şeması
+// SQLite kullanıyoruz (Render Disk üzerinde kalıcı).
+// PostgreSQL'e geçmek için: provider = "postgresql" + DATABASE_URL değiştir,
+// ardından `npx prisma migrate reset` çalıştır.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------- Kullanıcılar
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("editor") // admin | editor
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles Article[]
+}
+
+// ---------------------------------------------------------------- Kategoriler
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  color       String   @default("#dc2626")
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  showInMenu  Boolean  @default(true)
+  metaTitle       String?
+  metaDescription String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  articles Article[]
+
+  @@index([order])
+}
+
+// ---------------------------------------------------------------- Kaynaklar
+
+model Source {
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  name     String
+  homepage String
+  /// "rss" veya "crawl"
+  mode     String  @default("rss")
+  feedUrl  String?
+  /// crawl modunda taranacak liste sayfaları (JSON string dizisi)
+  crawlUrls String @default("[]")
+  /// crawl modunda haber bağlantısını tanımak için regex deseni
+  linkPattern String?
+  /// kaynak kategorisi -> bizim kategori slug eşleşmesi (JSON object)
+  categoryMap String @default("{}")
+  /// bu kaynaktan gelen haberler varsayılan olarak hangi kategoriye düşsün
+  defaultCategorySlug String @default("kibris")
+
+  isActive      Boolean   @default(true)
+  /// her turda bu kaynaktan en fazla kaç haber işlensin
+  maxPerRun     Int       @default(15)
+  priority      Int       @default(0)
+  /// çekilen haberler otomatik yayınlansın mı, yoksa taslak mı kalsın
+  autoPublish   Boolean   @default(true)
+
+  lastFetchedAt DateTime?
+  lastError     String?
+  fetchCount    Int       @default(0)
+  articleCount  Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles  Article[]
+  fetchLogs FetchLog[]
+
+  @@index([isActive, priority])
+}
+
+// ---------------------------------------------------------------- Haberler
+
+model Article {
+  id      String @id @default(cuid())
+  slug    String @unique
+  title   String
+  summary String
+
+  /// temizlenmiş HTML gövde
+  content String
+  /// arama için normalize edilmiş düz metin (küçük harf, aksansız)
+  searchText String @default("")
+
+  imageUrl   String? // orijinal (uzak) görsel
+  imageLocal String? // kendi sunucumuzdaki kopya
+  imageAlt   String?
+  imageCredit String?
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  sourceId   String?
+  source     Source?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  sourceUrl  String?  @unique
+  sourceName String?
+  author     String?
+
+  authorId String?
+  editor   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  status      String  @default("published") // draft | published | archived
+  isBreaking  Boolean @default(false)
+  isFeatured  Boolean @default(false)
+  isHeadline  Boolean @default(false)
+  order       Int     @default(0)
+
+  views        Int @default(0)
+  readingTime  Int @default(1)
+
+  metaTitle       String?
+  metaDescription String?
+  keywords        String?
+
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tags      ArticleTag[]
+  pageViews PageView[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId, status, publishedAt])
+  @@index([isBreaking, publishedAt])
+  @@index([isHeadline, order])
+  @@index([views])
+  @@index([sourceId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  articles ArticleTag[]
+}
+
+model ArticleTag {
+  articleId String
+  tagId     String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+}
+
+// ---------------------------------------------------------------- Reklamlar
+
+model AdSlot {
+  id   String @id @default(cuid())
+  name String
+  /// header | under-header | sidebar-top | sidebar-mid | sidebar-bottom |
+  /// in-feed | article-top | article-mid | article-bottom | footer | popup
+  placement String
+
+  /// "html" (AdSense vb.) | "image" (görsel + link)
+  type      String  @default("image")
+  htmlCode  String?
+  imageUrl  String?
+  imageUrlMobile String?
+  linkUrl   String?
+  altText   String?
+
+  isActive Boolean   @default(true)
+  startsAt DateTime?
+  endsAt   DateTime?
+  order    Int       @default(0)
+
+  impressions Int @default(0)
+  clicks      Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([placement, isActive, order])
+}
+
+// ---------------------------------------------------------------- İstatistik
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  articleId String?
+  article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  referrer  String?
+  device    String? // mobile | tablet | desktop
+  country   String?
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([articleId, createdAt])
+  @@index([path])
+}
+
+model FetchLog {
+  id       String   @id @default(cuid())
+  sourceId String?
+  source   Source?  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  found    Int      @default(0)
+  created  Int      @default(0)
+  skipped  Int      @default(0)
+  failed   Int      @default(0)
+  durationMs Int    @default(0)
+  error    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------- Ayarlar
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
