@@ -27,6 +27,10 @@ services:
         value: "22"
       - key: NODE_ENV
         value: production
+      # NODE_ENV=production npm'in devDependencies kurulumunu engelliyor;
+      # build araçları (tailwind, typescript) devDependencies'te olduğu için gerekli
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
 
       - key: DATABASE_URL
         value: file:/var/data/sondakika.db
