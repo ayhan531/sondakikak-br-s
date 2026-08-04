@@ -10,7 +10,7 @@ services:
     runtime: node
     region: frankfurt # Kıbrıs'a en yakın Render bölgesi
     plan: starter # Kalıcı disk için ücretli plan gerekir
-    branch: main
+    branch: master
 
     buildCommand: npm ci && npm run build
     startCommand: npm run start
