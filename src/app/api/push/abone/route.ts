@@ -4,6 +4,23 @@ import { publicVapidKey, pushConfigured } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 
+/** Yalnızca bilinen push servislerinin uç noktaları kabul edilir (SSRF önlemi). */
+function isKnownPushService(endpoint: string): boolean {
+  try {
+    const host = new URL(endpoint).hostname;
+    return (
+      host === "fcm.googleapis.com" ||
+      host === "updates.push.services.mozilla.com" ||
+      host.endsWith(".push.services.mozilla.com") ||
+      host.endsWith(".notify.windows.com") ||
+      host === "web.push.apple.com" ||
+      host.endsWith(".push.apple.com")
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** VAPID genel anahtarı — istemci aboneliği bununla kurar. */
 export async function GET() {
   return NextResponse.json({ ok: pushConfigured(), key: publicVapidKey() });
@@ -21,7 +38,7 @@ export async function POST(request: Request) {
     const p256dh = String(body?.keys?.p256dh ?? "");
     const auth = String(body?.keys?.auth ?? "");
 
-    if (!endpoint.startsWith("https://") || !p256dh || !auth) {
+    if (!endpoint.startsWith("https://") || !p256dh || !auth || !isKnownPushService(endpoint)) {
       return NextResponse.json({ ok: false }, { status: 400 });
     }
 

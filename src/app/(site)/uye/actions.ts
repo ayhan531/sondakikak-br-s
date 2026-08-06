@@ -10,6 +10,11 @@ import {
 
 export type ReaderFormState = { error?: string };
 
+/** Yalnızca site içi yollara izin ver (//evil.com ve /\evil.com açık yönlendirmeleri engellenir). */
+function safePath(next: string): string {
+  return next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/";
+}
+
 export async function readerRegisterAction(
   _previous: ReaderFormState,
   formData: FormData
@@ -27,7 +32,7 @@ export async function readerRegisterAction(
   if (result.error || !result.reader) return { error: result.error ?? "Kayıt başarısız." };
 
   await createReaderSession(result.reader);
-  redirect(next.startsWith("/") ? next : "/");
+  redirect(safePath(next));
 }
 
 export async function readerLoginAction(
@@ -42,7 +47,7 @@ export async function readerLoginAction(
   if (!reader) return { error: "E-posta veya şifre hatalı." };
 
   await createReaderSession(reader);
-  redirect(next.startsWith("/") ? next : "/");
+  redirect(safePath(next));
 }
 
 export async function readerLogoutAction() {

@@ -15,7 +15,9 @@ export default async function ReaderRegisterPage({
 }) {
   const { next = "/" } = await searchParams;
   const reader = await getCurrentReader();
-  if (reader) redirect(next.startsWith("/") ? next : "/");
+  const safeNext =
+    next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/";
+  if (reader) redirect(safeNext);
 
   return (
     <div className="mx-auto max-w-md px-4 py-12">
