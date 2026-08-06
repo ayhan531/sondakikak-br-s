@@ -38,6 +38,16 @@ const REMOVE_SELECTORS = [
   "[class*='ilgili']",
   "[class*='comment']",
   "[class*='yorum']",
+  "[id*='comment']",
+  "[id*='yorum']",
+  // Kaynak sitelerin emoji tepki bileşenleri (Mutlu / Alkış / Üzgün / Şaşırmış)
+  "[class*='reaction']",
+  "[class*='tepki']",
+  "[class*='duygu']",
+  "[class*='emoji']",
+  "[class*='emotion']",
+  "[class*='rating']",
+  "[class*='vote']",
   "[class*='newsletter']",
   "[class*='breadcrumb']",
   "[class*='tag-list']",
@@ -72,7 +82,26 @@ const BOILERPLATE_PATTERNS: RegExp[] = [
   /Bizi (takip edin|sosyal medyada takip edin)[^<]{0,60}/gi,
   /Google (News|Haberler)['’]?[a-zçğıöşü]* (ekleyin|takip edin)[^<]{0,60}/gi,
   /Yorum(lar)?ınızı (bekliyoruz|paylaşın)[^<]{0,60}/gi,
+  /Bu habere (tepkiniz|emojiyle tepki ver)[^<]{0,60}/gi,
+  /Tepkini(zi)? (göster|bırak)[^<]{0,40}/gi,
+  /Yorum [Yy]ap(mak için üye girişi yapın)?\.?/g,
+  /Yorum [Yy]az\.?/g,
+  /Yorum [Bb]ırak\.?/g,
+  /Yorum [Gg]önder\.?/g,
 ];
+
+/**
+ * Kaynak sitelerin tepki/yorum bileşenlerinden geriye kalan tek kelimelik
+ * satırlar. Paragrafın TAMAMI bunlardan biriyse (veya yalnız bir sayıysa) atılır.
+ */
+const JUNK_LINE_WORDS = new Set([
+  "mutlu", "alkış", "alkis", "üzgün", "uzgun", "şaşırmış", "sasirmis", "şaşkın",
+  "kızgın", "kizgin", "sinirli", "korkmuş", "komik", "beğen", "begen", "beğendim",
+  "yorum", "yorumlar", "yorum yap", "yorum yaz", "yorum bırak", "yorum gönder",
+  "yorum yapın", "yorumunuz", "paylaş", "paylas", "whatsapp", "facebook", "twitter",
+  "telegram", "linkedin", "pinterest", "e-posta", "eposta", "email", "yazdır", "yazdir",
+  "tepkiler", "tepkiniz", "tepki ver", "oy ver", "puanla",
+]);
 
 export type CleanResult = {
   html: string;
@@ -221,11 +250,22 @@ export function cleanArticleHtml(rawHtml: string, baseUrl: string): CleanResult 
 
   const cleaned = $$("#sdk-root");
 
-  // "02/08/2026" gibi tek başına kalan tarih satırlarını at
+  // Tek başına kalan tarih satırları, tepki sayaçları ("0") ve
+  // tepki/yorum kelimeleri ("Mutlu", "Alkış", "Yorum Yap"…) at
   cleaned.find("p, h2, h3, h4, li").each((_, el) => {
     const $el = $$(el);
     if ($el.find("img, iframe").length) return;
-    if (/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$/.test($el.text().trim())) $el.remove();
+    const text = $el.text().replace(/\s+/g, " ").trim();
+    const lower = text.toLocaleLowerCase("tr-TR");
+    if (
+      /^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$/.test(text) ||
+      /^\d{1,5}$/.test(text) ||
+      JUNK_LINE_WORDS.has(lower) ||
+      // "0 Mutlu", "12 Alkış" gibi sayı + tepki kelimesi bileşimleri
+      /^\d{1,5}\s+(mutlu|alkış|alkis|üzgün|uzgun|şaşırmış|sasirmis|şaşkın|kızgın|kizgin|sinirli|korkmuş|komik|yorum(lar)?)$/.test(lower)
+    ) {
+      $el.remove();
+    }
   });
 
   // Gövdenin başındaki artık gürültü (reklam görseli yığınları, kısa etiket satırları).

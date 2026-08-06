@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/kategoriler", label: "Kategoriler", icon: "M3 5h8v6H3V5Zm10 0h8v6h-8V5ZM3 13h8v6H3v-6Zm10 0h8v6h-8v-6Z" },
   { href: "/admin/kaynaklar", label: "Haber Kaynakları", icon: "M5 4h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm8 1.5V10h4.5L13 5.5ZM7 13h10v1.5H7V13Zm0 3.5h7V18H7v-1.5Z" },
   { href: "/admin/reklamlar", label: "Reklamlar", icon: "M3 6h18v12H3V6Zm2 2v8h14V8H5Zm2 2h6v1.5H7V10Zm0 3h10v1.5H7V13Z" },
+  { href: "/admin/mesajlar", label: "Mesajlar", icon: "M3 5h18v12H8l-5 4V5Zm4 4h10v1.5H7V9Zm0 3h7v1.5H7V12Z" },
   { href: "/admin/istatistikler", label: "İstatistikler", icon: "M4 20h16v1H3V3h1v17Zm2-3V9h3v8H6Zm5 0V5h3v12h-3Zm5 0v-6h3v6h-3Z" },
   { href: "/admin/ayarlar", label: "Ayarlar", icon: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 4-2-1.2.3-2.3-2.2-.9-1-2.1-2.3.4L12 3l-1.8 1.9-2.3-.4-1 2.1-2.2.9.3 2.3L3 12l2 1.2-.3 2.3 2.2.9 1 2.1 2.3-.4L12 21l1.8-1.9 2.3.4 1-2.1 2.2-.9-.3-2.3L21 12Z" },
 ] as const;

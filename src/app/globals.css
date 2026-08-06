@@ -43,7 +43,8 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  /* Not: scroll-behavior:smooth kullanmıyoruz — Next.js sayfa geçişlerinde
+     başa dönüşü animasyona çevirip "alttan yukarı kayma" etkisi yaratıyor. */
   -webkit-text-size-adjust: 100%;
 }
 

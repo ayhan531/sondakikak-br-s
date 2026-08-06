@@ -23,6 +23,8 @@ export type SourceRunResult = {
   failed: number;
   durationMs: number;
   error?: string;
+  /** Bu turda yayınlanan haberlerin slug'ları (arama motoru bildirimi için). */
+  createdSlugs: string[];
 };
 
 /** İçerik bu uzunluğun altındaysa haber sayfasına gidip tam metni çıkarırız. */
@@ -101,6 +103,7 @@ export async function runSource(source: SourceRecord): Promise<SourceRunResult> 
     skipped: 0,
     failed: 0,
     durationMs: 0,
+    createdSlugs: [],
   };
 
   try {
@@ -163,8 +166,12 @@ export async function runSource(source: SourceRecord): Promise<SourceRunResult> 
     for (const item of fresh) {
       try {
         const created = await ingestItem(source, item, recentTitleSets);
-        if (created === "created") result.created++;
-        else result.skipped++;
+        if (created) {
+          result.created++;
+          if (created.published) result.createdSlugs.push(created.slug);
+        } else {
+          result.skipped++;
+        }
       } catch {
         result.failed++;
       }
@@ -210,7 +217,7 @@ async function ingestItem(
   source: SourceRecord,
   item: FeedItem,
   recentTitleSets: Set<string>[]
-): Promise<"created" | "skipped"> {
+): Promise<{ slug: string; published: boolean } | null> {
   let title = item.title;
   let contentHtml = item.contentHtml
     ? cleanArticleHtml(item.contentHtml, item.link).html
@@ -250,12 +257,12 @@ async function ingestItem(
   const plain = htmlToText(contentHtml);
 
   // Kalite eşiği: başlıksız veya çok kısa içerikleri almıyoruz
-  if (title.length < 12 || plain.length < 220) return "skipped";
+  if (title.length < 12 || plain.length < 220) return null;
 
   // Kaynaklar arası tekrar kontrolü
   const words = titleWords(title);
   if (recentTitleSets.some((existing) => similarity(words, existing) >= 0.75)) {
-    return "skipped";
+    return null;
   }
   recentTitleSets.push(words);
 
@@ -266,7 +273,7 @@ async function ingestItem(
   );
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
 
-  const localImage = imageUrl ? await ingestImage(imageUrl) : null;
+  const localImage = imageUrl ? await ingestImage(imageUrl, item.link) : null;
   const slug = await uniqueSlug(title);
   const keywords = extractKeywords(`${title} ${plain}`, 8);
 
@@ -296,7 +303,7 @@ async function ingestItem(
 
   await attachTags(article.id, keywords.slice(0, 5));
 
-  return "created";
+  return { slug: article.slug, published: article.status === "published" };
 }
 
 // ---------------------------------------------------------------- tüm kaynaklar
@@ -314,6 +321,19 @@ export async function runAllSources(options: { sourceSlug?: string } = {}) {
   const results: SourceRunResult[] = [];
   for (const source of sources) {
     results.push(await runSource(source));
+  }
+
+  // Yeni yayınlanan haberleri arama motorlarına bildir (IndexNow + WebSub)
+  const newSlugs = results.flatMap((r) => r.createdSlugs);
+  if (newSlugs.length) {
+    try {
+      const { pingSearchEngines } = await import("@/lib/seo-ping");
+      const { getSettings } = await import("@/lib/settings");
+      const base = (await getSettings()).siteUrl.replace(/\/$/, "");
+      await pingSearchEngines(newSlugs.map((slug) => `${base}/haber/${slug}`));
+    } catch {
+      // Bildirim başarısız olsa da haber akışı etkilenmez
+    }
   }
 
   return {

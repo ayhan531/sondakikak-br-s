@@ -11,7 +11,10 @@ const MIN_BYTES = 3_000; // 3KB altı görseller genelde ikon/piksel
  * Kaynak site görseli silse bile haberimiz görselsiz kalmaz, ayrıca
  * WebP + tek boyut sayesinde sayfa hızı (Core Web Vitals) yüksek kalır.
  */
-export async function ingestImage(remoteUrl: string): Promise<string | null> {
+export async function ingestImage(
+  remoteUrl: string,
+  referer?: string
+): Promise<string | null> {
   if (!remoteUrl || remoteUrl.startsWith("data:")) return null;
 
   let normalized: string;
@@ -27,7 +30,13 @@ export async function ingestImage(remoteUrl: string): Promise<string | null> {
   const guess = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${hash}.webp`;
   if (await mediaExists(guess)) return `/media/${guess}`;
 
-  const result = await fetchBinary(normalized);
+  // Önce haber sayfası Referer'ıyla dene; olmazsa görselin kendi kökeniyle
+  let result = await fetchBinary(normalized, {
+    referer: referer ?? new URL(normalized).origin + "/",
+  });
+  if ((!result.ok || !result.data || result.data.length < MIN_BYTES) && referer) {
+    result = await fetchBinary(normalized, { referer: new URL(normalized).origin + "/" });
+  }
   if (!result.ok || !result.data || result.data.length < MIN_BYTES) return null;
 
   try {

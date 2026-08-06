@@ -96,13 +96,19 @@ export async function fetchText(
 /** İkili veri indirir (görseller için). */
 export async function fetchBinary(
   url: string,
-  timeout = DEFAULT_TIMEOUT
+  options: { timeout?: number; referer?: string } = {}
 ): Promise<{ ok: boolean; data?: Buffer; contentType?: string; error?: string }> {
+  const { timeout = DEFAULT_TIMEOUT, referer } = options;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const res = await fetch(url, {
-      headers: { "user-agent": USER_AGENT, accept: "image/avif,image/webp,image/*,*/*;q=0.8" },
+      headers: {
+        "user-agent": USER_AGENT,
+        accept: "image/avif,image/webp,image/*,*/*;q=0.8",
+        // Hotlink koruması olan siteler Referer olmadan 403 döndürüyor
+        ...(referer ? { referer } : {}),
+      },
       redirect: "follow",
       signal: controller.signal,
     });

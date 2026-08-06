@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getSettings } from "@/lib/settings";
+import { ContactForm } from "./ContactForm";
 
 export const metadata: Metadata = {
   title: "İletişim",
@@ -52,6 +53,14 @@ export default async function ContactPage() {
           Gördüğünüz, duyduğunuz veya tanık olduğunuz olayları bize iletin. Kaynağınızın gizliliği
           bizim için esastır.
         </p>
+      </div>
+
+      <div className="mt-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-ink-200/70 sm:p-8">
+        <h2 className="mb-1 text-xl font-black text-ink-900">Bize Ulaşın</h2>
+        <p className="mb-6 text-sm text-ink-600">
+          Formu doldurun, mesajınız doğrudan yayın ekibimize ulaşsın.
+        </p>
+        <ContactForm />
       </div>
     </div>
   );
