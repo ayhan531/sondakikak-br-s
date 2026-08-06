@@ -72,6 +72,25 @@ export async function recleanArticles() {
 }
 
 /**
+ * Eski kirli içerikten türetilmiş işe yaramaz etiketleri siler
+ * (kaynak sitelerin tepki/paylaşım widget kelimeleri).
+ */
+export async function cleanupJunkTags() {
+  const junkSlugs = [
+    "mutlu", "alkis", "uzgun", "sasirmis", "saskin", "kizgin", "sinirli",
+    "korkmus", "komik", "yorum", "yorumlar", "begen", "paylas", "tepki",
+    "tepkiler", "whatsapp", "facebook", "twitter", "telegram", "instagram",
+    "linkedin", "pinterest", "eposta", "e-posta", "yazdir", "abone",
+  ];
+
+  const result = await prisma.tag.deleteMany({
+    where: { slug: { in: junkSlugs } },
+  });
+
+  return { deleted: result.count };
+}
+
+/**
  * Yerel kopyası alınamamış haber görsellerini (hotlink koruması vb. yüzünden)
  * Referer başlığıyla yeniden indirmeyi dener.
  */

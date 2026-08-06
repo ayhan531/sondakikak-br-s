@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireCronSecret } from "@/lib/cron-auth";
-import { recleanArticles, repairMissingImages } from "@/lib/maintenance";
+import { cleanupJunkTags, recleanArticles, repairMissingImages } from "@/lib/maintenance";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +21,12 @@ async function handle(request: Request) {
 
   if (islem === "gorsel-onar") {
     const result = await repairMissingImages();
+    revalidatePath("/", "layout");
+    return NextResponse.json({ ok: true, islem, ...result });
+  }
+
+  if (islem === "etiket-temizle") {
+    const result = await cleanupJunkTags();
     revalidatePath("/", "layout");
     return NextResponse.json({ ok: true, islem, ...result });
   }
