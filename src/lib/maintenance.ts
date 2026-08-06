@@ -95,6 +95,12 @@ export async function repairMissingImages(limit = 60) {
       });
       repaired++;
     } else {
+      // Çekim sırasında ve burada da indirilemedi: uzak adres ölü/korumalı.
+      // Kırık görsel ikonu yerine yer tutucu gösterilsin diye adresi temizliyoruz.
+      await prisma.article.update({
+        where: { id: article.id },
+        data: { imageUrl: null },
+      });
       failed++;
     }
   }
