@@ -91,38 +91,65 @@ export async function cleanupJunkTags() {
 }
 
 /**
- * Yerel kopyası alınamamış haber görsellerini (hotlink koruması vb. yüzünden)
- * Referer başlığıyla yeniden indirmeyi dener.
+ * Yerel görseli olmayan TÜM haberlere görsel garantiler:
+ * kapak adresi -> gövdedeki görseller -> markalı kategori kapağı.
  */
-export async function repairMissingImages(limit = 60) {
+export async function repairMissingImages(limit = 200) {
   const articles = await prisma.article.findMany({
-    where: { imageLocal: null, imageUrl: { not: null } },
-    select: { id: true, imageUrl: true, sourceUrl: true },
+    where: { imageLocal: null },
+    select: {
+      id: true,
+      imageUrl: true,
+      sourceUrl: true,
+      content: true,
+      category: { select: { slug: true, name: true, color: true } },
+    },
     orderBy: { publishedAt: "desc" },
     take: limit,
   });
 
   let repaired = 0;
-  let failed = 0;
+  let placeholders = 0;
 
   for (const article of articles) {
-    const local = await ingestImage(article.imageUrl!, article.sourceUrl ?? undefined);
+    const referer = article.sourceUrl ?? undefined;
+    let local: string | null = null;
+
+    if (article.imageUrl) {
+      local = await ingestImage(article.imageUrl, referer);
+    }
+
+    if (!local) {
+      // Gövdedeki ilk birkaç görseli dene
+      const bodyImages = [...article.content.matchAll(/<img[^>]+src="(https?:[^"]+)"/gi)]
+        .map((match) => match[1])
+        .slice(0, 4);
+      for (const candidate of bodyImages) {
+        local = await ingestImage(candidate, referer);
+        if (local) break;
+      }
+    }
+
+    if (local) {
+      repaired++;
+    } else {
+      // Markalı kategori kapağı — hiçbir haber görselsiz kalmaz
+      const { ensurePlaceholder } = await import("@/lib/scraper/placeholder");
+      local = await ensurePlaceholder(
+        article.category?.slug ?? "genel",
+        article.category?.name ?? "Haber",
+        article.category?.color
+      ).catch(() => null);
+      if (local) placeholders++;
+    }
+
     if (local) {
       await prisma.article.update({
         where: { id: article.id },
         data: { imageLocal: local },
       });
-      repaired++;
-    } else {
-      // Çekim sırasında ve burada da indirilemedi: uzak adres ölü/korumalı.
-      // Kırık görsel ikonu yerine yer tutucu gösterilsin diye adresi temizliyoruz.
-      await prisma.article.update({
-        where: { id: article.id },
-        data: { imageUrl: null },
-      });
-      failed++;
     }
   }
 
-  return { candidates: articles.length, repaired, failed };
+  return { candidates: articles.length, repaired, placeholders };
 }

@@ -4,11 +4,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleCard } from "@/components/ArticleCard";
 import { AdSlot } from "@/components/ads/AdSlot";
+import { ReactionBar } from "@/components/ReactionBar";
 import { ShareButtons } from "@/components/ShareButtons";
 import { ViewTracker } from "@/components/ViewTracker";
 import { articleImage, getArticleBySlug, getMostRead, getRelated } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 import { formatDateTime } from "@/lib/format";
+import { prisma } from "@/lib/prisma";
+import { CommentForm } from "./CommentForm";
 
 export const revalidate = 300;
 
@@ -79,9 +82,15 @@ export default async function ArticlePage({ params }: PageProps) {
   const image = articleImage(article);
   const tagIds = article.tags.map((entry) => entry.tagId);
 
-  const [related, mostRead] = await Promise.all([
+  const [related, mostRead, comments] = await Promise.all([
     getRelated(article.id, article.categoryId, tagIds, 6),
     getMostRead(6),
+    prisma.comment.findMany({
+      where: { articleId: article.id, status: "approved" },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: { reader: { select: { name: true } } },
+    }),
   ]);
 
   const [firstHalf, secondHalf] = splitContent(article.content);
@@ -250,11 +259,46 @@ export default async function ArticlePage({ params }: PageProps) {
             </div>
           )}
 
+          <div className="mt-6">
+            <ReactionBar articleId={article.id} />
+          </div>
+
           <div className="mt-6 rounded-xl bg-white p-4 shadow-sm ring-1 ring-ink-200/70">
             <ShareButtons url={url} title={article.title} />
           </div>
 
           <AdSlot placement="article-bottom" className="mt-6" />
+
+          {/* Yorumlar */}
+          <section aria-label="Yorumlar" className="mt-10">
+            <h2 className="mb-4 border-b-2 border-brand-600 pb-2 text-lg font-black uppercase text-ink-900">
+              Yorumlar {comments.length > 0 && `(${comments.length})`}
+            </h2>
+
+            <CommentForm articleId={article.id} slug={article.slug} />
+
+            {comments.length > 0 && (
+              <div className="mt-6 space-y-4">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-ink-200/70">
+                    <div className="flex items-center gap-2 text-xs text-ink-500">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-xs font-black text-brand-700">
+                        {comment.reader.name.slice(0, 1).toLocaleUpperCase("tr-TR")}
+                      </span>
+                      <span className="font-bold text-ink-800">{comment.reader.name}</span>
+                      <span>·</span>
+                      <time dateTime={comment.createdAt.toISOString()}>
+                        {formatDateTime(comment.createdAt)}
+                      </time>
+                    </div>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
+                      {comment.content}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
           {/* İlgili haberler */}
           {related.length > 0 && (

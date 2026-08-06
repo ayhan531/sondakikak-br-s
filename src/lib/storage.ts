@@ -47,6 +47,15 @@ export async function saveBuffer(
   return `/media/${relative}`;
 }
 
+/** Belirli bir göreli yola kaydeder (ör. kategori placeholder'ları). */
+export async function saveMediaAs(buffer: Buffer, relative: string): Promise<string> {
+  const full = resolveMediaPath(relative);
+  if (!full) throw new Error(`Geçersiz medya yolu: ${relative}`);
+  await mkdir(path.dirname(full), { recursive: true });
+  await writeFile(full, buffer);
+  return `/media/${relative}`;
+}
+
 export async function mediaExists(relative: string): Promise<boolean> {
   const full = resolveMediaPath(relative);
   if (!full) return false;

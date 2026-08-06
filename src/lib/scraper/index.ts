@@ -219,9 +219,13 @@ async function ingestItem(
   recentTitleSets: Set<string>[]
 ): Promise<{ slug: string; published: boolean } | null> {
   let title = item.title;
-  let contentHtml = item.contentHtml
-    ? cleanArticleHtml(item.contentHtml, item.link).html
-    : "";
+  let contentHtml = "";
+  let bodyImages: string[] = [];
+  if (item.contentHtml) {
+    const cleaned = cleanArticleHtml(item.contentHtml, item.link);
+    contentHtml = cleaned.html;
+    bodyImages = cleaned.images;
+  }
   let imageUrl = item.imageUrl;
   let publishedAt = item.publishedAt;
   let author = item.author;
@@ -273,7 +277,28 @@ async function ingestItem(
   );
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
 
-  const localImage = imageUrl ? await ingestImage(imageUrl, item.link) : null;
+  // Görsel garantisi: kapak -> gövdedeki görseller -> markalı kategori kapağı.
+  // Hiçbir haber görselsiz yayınlanmaz.
+  let localImage = imageUrl ? await ingestImage(imageUrl, item.link) : null;
+  if (!localImage) {
+    for (const candidate of bodyImages.slice(0, 4)) {
+      if (candidate === imageUrl) continue;
+      localImage = await ingestImage(candidate, item.link);
+      if (localImage) {
+        imageUrl = candidate;
+        break;
+      }
+    }
+  }
+  if (!localImage) {
+    const { ensurePlaceholder } = await import("./placeholder");
+    localImage = await ensurePlaceholder(
+      category?.slug ?? source.defaultCategorySlug,
+      category?.name ?? "Haber",
+      category?.color
+    ).catch(() => null);
+  }
+
   const slug = await uniqueSlug(title);
   const keywords = extractKeywords(`${title} ${plain}`, 8);
 
@@ -323,7 +348,7 @@ export async function runAllSources(options: { sourceSlug?: string } = {}) {
     results.push(await runSource(source));
   }
 
-  // Yeni yayınlanan haberleri arama motorlarına bildir (IndexNow + WebSub)
+  // Yeni yayınlanan haberler: arama motoru + push bildirimi + sosyal medya
   const newSlugs = results.flatMap((r) => r.createdSlugs);
   if (newSlugs.length) {
     try {
@@ -333,6 +358,22 @@ export async function runAllSources(options: { sourceSlug?: string } = {}) {
       await pingSearchEngines(newSlugs.map((slug) => `${base}/haber/${slug}`));
     } catch {
       // Bildirim başarısız olsa da haber akışı etkilenmez
+    }
+
+    try {
+      const fresh = await prisma.article.findMany({
+        where: { slug: { in: newSlugs }, status: "published" },
+        select: { title: true, slug: true, summary: true, imageLocal: true },
+        orderBy: { publishedAt: "desc" },
+      });
+
+      const { sendPushForNewArticles } = await import("@/lib/push");
+      await sendPushForNewArticles(fresh);
+
+      const { shareToSocial } = await import("@/lib/social-post");
+      await shareToSocial(fresh);
+    } catch {
+      // Push/sosyal paylaşım hatası haber akışını durdurmaz
     }
   }
 

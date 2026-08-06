@@ -138,6 +138,8 @@ model Article {
 
   tags      ArticleTag[]
   pageViews PageView[]
+  comments  Comment[]
+  reactions Reaction[]
 
   @@index([status, publishedAt])
   @@index([categoryId, status, publishedAt])
@@ -228,6 +230,71 @@ model FetchLog {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------- Okurlar
+
+/// Site okurları (yorum ve tepki için). Yönetici/editörlerden (User) ayrıdır.
+model Reader {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String
+  /// OAuth ile kayıt olanlarda boş kalır
+  password   String?
+  /// email | google | microsoft | yandex | apple
+  provider   String   @default("email")
+  providerId String?
+  avatarUrl  String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  lastLogin  DateTime?
+
+  comments  Comment[]
+  reactions Reaction[]
+
+  @@index([provider, providerId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  readerId  String
+  reader    Reader   @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  content   String
+  /// pending | approved | rejected
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  @@index([articleId, status, createdAt])
+  @@index([status, createdAt])
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  readerId  String?
+  reader    Reader?  @relation(fields: [readerId], references: [id], onDelete: Cascade)
+  /// Giriş yapmamış okurlar için çerezdeki anonim kimlik
+  anonId    String
+  /// mutlu | alkis | uzgun | sasirmis | kizgin
+  type      String
+  createdAt DateTime @default(now())
+
+  @@unique([articleId, anonId])
+  @@index([articleId, type])
+}
+
+// ---------------------------------------------------------------- Bildirimler
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  lastError String?
 }
 
 // ---------------------------------------------------------------- İletişim
