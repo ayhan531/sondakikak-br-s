@@ -91,17 +91,26 @@ export async function cleanupJunkTags() {
 }
 
 /**
- * Yerel görseli olmayan TÜM haberlere görsel garantiler:
- * kapak adresi -> gövdedeki görseller -> markalı kategori kapağı.
+ * Gerçek görseli olmayan TÜM haberlere görsel bulur. Sıra:
+ * 1) kayıtlı kapak adresi  2) kaynak haber sayfasını yeniden ziyaret edip
+ * og:image / gövde görselini çıkar  3) gövdedeki görsel adresleri.
+ * Markalı kategori kapağı yalnızca kaynakta hiç görsel yoksa son çaredir.
  */
 export async function repairMissingImages(limit = 200) {
   const articles = await prisma.article.findMany({
-    where: { imageLocal: null },
+    where: {
+      OR: [
+        { imageLocal: null },
+        // Daha önce placeholder atananlar da gerçek görsel için yeniden denenir
+        { imageLocal: { startsWith: "/media/placeholder/" } },
+      ],
+    },
     select: {
       id: true,
       imageUrl: true,
       sourceUrl: true,
       content: true,
+      imageLocal: true,
       category: { select: { slug: true, name: true, color: true } },
     },
     orderBy: { publishedAt: "desc" },
@@ -110,46 +119,72 @@ export async function repairMissingImages(limit = 200) {
 
   let repaired = 0;
   let placeholders = 0;
+  let failed = 0;
 
   for (const article of articles) {
     const referer = article.sourceUrl ?? undefined;
     let local: string | null = null;
+    let remoteUrl: string | null = null;
 
+    // 1) Kayıtlı kapak adresi
     if (article.imageUrl) {
       local = await ingestImage(article.imageUrl, referer);
+      if (local) remoteUrl = article.imageUrl;
     }
 
+    // 2) Kaynak haber sayfasını yeniden ziyaret et: og:image + gövde görselleri
+    if (!local && article.sourceUrl) {
+      try {
+        const { extractArticle } = await import("@/lib/scraper/extract");
+        const page = await extractArticle(article.sourceUrl);
+        if (page?.imageUrl) {
+          local = await ingestImage(page.imageUrl, article.sourceUrl);
+          if (local) remoteUrl = page.imageUrl;
+        }
+      } catch {
+        // kaynak site kapalı olabilir; sıradaki adıma geç
+      }
+    }
+
+    // 3) Kayıtlı gövdedeki görsel adresleri
     if (!local) {
-      // Gövdedeki ilk birkaç görseli dene
       const bodyImages = [...article.content.matchAll(/<img[^>]+src="(https?:[^"]+)"/gi)]
         .map((match) => match[1])
         .slice(0, 4);
       for (const candidate of bodyImages) {
         local = await ingestImage(candidate, referer);
-        if (local) break;
+        if (local) {
+          remoteUrl = candidate;
+          break;
+        }
       }
-    }
-
-    if (local) {
-      repaired++;
-    } else {
-      // Markalı kategori kapağı — hiçbir haber görselsiz kalmaz
-      const { ensurePlaceholder } = await import("@/lib/scraper/placeholder");
-      local = await ensurePlaceholder(
-        article.category?.slug ?? "genel",
-        article.category?.name ?? "Haber",
-        article.category?.color
-      ).catch(() => null);
-      if (local) placeholders++;
     }
 
     if (local) {
       await prisma.article.update({
         where: { id: article.id },
-        data: { imageLocal: local },
+        data: { imageLocal: local, ...(remoteUrl ? { imageUrl: remoteUrl } : {}) },
       });
+      repaired++;
+    } else if (!article.imageLocal) {
+      // Kaynakta gerçekten görsel yok: en azından markalı kapak göster
+      const { ensurePlaceholder } = await import("@/lib/scraper/placeholder");
+      const placeholder = await ensurePlaceholder(
+        article.category?.slug ?? "genel",
+        article.category?.name ?? "Haber",
+        article.category?.color
+      ).catch(() => null);
+      if (placeholder) {
+        await prisma.article.update({
+          where: { id: article.id },
+          data: { imageLocal: placeholder },
+        });
+        placeholders++;
+      }
+    } else {
+      failed++; // placeholder'lı kaldı, kaynakta görsel bulunamadı
     }
   }
 
-  return { candidates: articles.length, repaired, placeholders };
+  return { candidates: articles.length, repaired, placeholders, failed };
 }

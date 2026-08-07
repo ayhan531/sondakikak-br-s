@@ -232,8 +232,9 @@ async function ingestItem(
   let description = "";
   let sectionHint: string | undefined;
 
-  // Besleme yetersizse haber sayfasına git
-  if (!title || contentHtml.length < MIN_BODY_LENGTH) {
+  // Besleme yetersizse VEYA görsel vermemişse haber sayfasına git
+  // (og:image genellikle yalnızca sayfada bulunur; görselsiz haber istemiyoruz)
+  if (!title || contentHtml.length < MIN_BODY_LENGTH || (!imageUrl && !bodyImages.length)) {
     const page = await extractArticle(item.link);
     if (page) {
       title = title || page.title || "";
