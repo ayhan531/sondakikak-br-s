@@ -5,9 +5,11 @@ import { AdSlot } from "@/components/ads/AdSlot";
 import { Pagination } from "@/components/Pagination";
 import { countArticles, getCategoryBySlug, getLatest, getMostRead } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
-import { prisma } from "@/lib/prisma";
 
-export const revalidate = 120;
+// Sayfalama searchParams kullandığı için statik üretimle (SSG) çakışıyordu;
+// build veritabanı boş olduğundan hiçbir kategori önceden üretilemiyor ve
+// çalışma anında DYNAMIC_SERVER_USAGE hatası dönüyordu. Dinamik render ediyoruz.
+export const dynamic = "force-dynamic";
 
 const PER_PAGE = 24;
 
@@ -15,14 +17,6 @@ type PageProps = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ sayfa?: string }>;
 };
-
-export async function generateStaticParams() {
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    select: { slug: true },
-  });
-  return categories.map((category) => ({ slug: category.slug }));
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
