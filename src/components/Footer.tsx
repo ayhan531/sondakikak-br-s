@@ -45,6 +45,9 @@ export async function Footer() {
           <div>
             <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-white">Kurumsal</h2>
             <ul className="space-y-2 text-sm">
+              <li><Link href="/nobetci-eczaneler" className="text-ink-400 transition hover:text-white">Nöbetçi Eczaneler</Link></li>
+              <li><Link href="/doviz-kurlari" className="text-ink-400 transition hover:text-white">Döviz Kurları</Link></li>
+              <li><Link href="/hava-durumu" className="text-ink-400 transition hover:text-white">Hava Durumu</Link></li>
               <li><Link href="/kunye" className="text-ink-400 transition hover:text-white">Künye</Link></li>
               <li><Link href="/iletisim" className="text-ink-400 transition hover:text-white">İletişim</Link></li>
               <li><Link href="/gizlilik" className="text-ink-400 transition hover:text-white">Gizlilik Politikası</Link></li>

@@ -50,6 +50,9 @@ export async function GET(
       { loc: `${base}/iletisim`, changefreq: "yearly", priority: "0.3" },
       { loc: `${base}/gizlilik`, changefreq: "yearly", priority: "0.2" },
       { loc: `${base}/reklam`, changefreq: "monthly", priority: "0.4" },
+      { loc: `${base}/nobetci-eczaneler`, changefreq: "daily", priority: "0.8" },
+      { loc: `${base}/doviz-kurlari`, changefreq: "hourly", priority: "0.7" },
+      { loc: `${base}/hava-durumu`, changefreq: "daily", priority: "0.7" },
     ];
     return xmlResponse(buildUrlset(entries));
   }

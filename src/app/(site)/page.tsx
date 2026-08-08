@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import { AdSlot } from "@/components/ads/AdSlot";
+import { KurlarWidget } from "@/components/widgets/KurlarWidget";
+import { HavaWidget } from "@/components/widgets/HavaWidget";
+import { EczaneWidget } from "@/components/widgets/EczaneWidget";
+import { TrafikWidget } from "@/components/widgets/TrafikWidget";
 import {
   getHeadlines,
   getLatest,
@@ -146,6 +150,11 @@ export default async function HomePage() {
               ))}
             </div>
           </section>
+
+          <HavaWidget />
+          <KurlarWidget />
+          <EczaneWidget />
+          <TrafikWidget />
 
           <AdSlot placement="sidebar-mid" />
 

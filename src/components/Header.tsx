@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "./Logo";
 import { SearchBox } from "./SearchBox";
 import { MobileMenu } from "./MobileMenu";
+import { AuthLinks } from "./AuthLinks";
 import { getMenuCategories } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 import { formatLongDate } from "@/lib/format";
@@ -28,6 +29,10 @@ export async function Header() {
         <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-4 text-xs">
           <span className="font-medium">{formatLongDate(new Date())}</span>
           <div className="flex items-center gap-4">
+            <Link href="/nobetci-eczaneler" className="transition hover:text-white">Nöbetçi Eczaneler</Link>
+            <Link href="/doviz-kurlari" className="transition hover:text-white">Döviz</Link>
+            <Link href="/hava-durumu" className="transition hover:text-white">Hava Durumu</Link>
+            <span className="h-3 w-px bg-ink-700" />
             <Link href="/kunye" className="transition hover:text-white">Künye</Link>
             <Link href="/iletisim" className="transition hover:text-white">İletişim</Link>
             <Link href="/rss.xml" className="transition hover:text-white">RSS</Link>
@@ -57,8 +62,11 @@ export async function Header() {
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
           <MobileMenu categories={categories} />
           <Logo />
-          <div className="ml-auto hidden w-72 lg:block">
-            <SearchBox />
+          <div className="ml-auto flex items-center gap-3">
+            <div className="hidden w-72 lg:block">
+              <SearchBox />
+            </div>
+            <AuthLinks />
           </div>
         </div>
       </div>
