@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { CloudSun, Droplets, Wind } from "lucide-react";
 import { getWeather, describeWeather } from "@/lib/widgets/hava";
+import { WeatherIcon } from "@/components/widgets/WeatherIcon";
 import { AdSlot } from "@/components/ads/AdSlot";
 
 // Canlı hava verisi her istekte (bellek önbelleğiyle) sunulur
@@ -18,7 +20,10 @@ export default async function HavaDurumuPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-black text-ink-900 sm:text-3xl">🌤️ KKTC Hava Durumu</h1>
+        <h1 className="flex items-center gap-3 text-2xl font-black text-ink-900 sm:text-3xl">
+          <CloudSun className="h-8 w-8 text-sky-500" aria-hidden="true" />
+          KKTC Hava Durumu
+        </h1>
         <p className="mt-2 text-sm text-ink-600">
           Anlık ölçümler ve yarının tahmini — veriler 15 dakikada bir güncellenir.
         </p>
@@ -41,7 +46,7 @@ export default async function HavaDurumuPage() {
               >
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-black text-ink-900">{city.city}</h2>
-                  <span className="text-3xl" aria-hidden="true">{city.emoji}</span>
+                  <WeatherIcon code={city.code} className="h-10 w-10" />
                 </div>
                 <p className="mt-1 text-sm font-semibold text-ink-600">{city.description}</p>
                 <p className="mt-3 text-4xl font-black tabular-nums text-ink-900">
@@ -51,12 +56,18 @@ export default async function HavaDurumuPage() {
                   Bugün {city.todayMin}° / {city.todayMax}°
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 border-t border-ink-100 pt-3 text-xs font-semibold text-ink-600">
-                  <span>💧 Nem %{city.humidity}</span>
-                  <span>💨 {city.windSpeed} km/s</span>
+                  <span className="flex items-center gap-1.5">
+                    <Droplets className="h-4 w-4 text-sky-500" aria-hidden="true" />
+                    Nem %{city.humidity}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Wind className="h-4 w-4 text-ink-400" aria-hidden="true" />
+                    {city.windSpeed} km/s
+                  </span>
                 </div>
-                <p className="mt-3 rounded-lg bg-ink-50 px-3 py-2 text-xs font-semibold text-ink-600">
-                  Yarın: {tomorrow.emoji} {tomorrow.description}, {city.tomorrowMin}° /{" "}
-                  {city.tomorrowMax}°
+                <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-ink-50 px-3 py-2 text-xs font-semibold text-ink-600">
+                  Yarın: <WeatherIcon code={city.tomorrowCode} className="h-4 w-4" />{" "}
+                  {tomorrow.description}, {city.tomorrowMin}° / {city.tomorrowMax}°
                 </p>
               </article>
             );

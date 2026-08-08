@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { CircleUserRound } from "lucide-react";
 
 type Me = { name: string } | null;
 
@@ -26,7 +27,7 @@ export function AuthLinks() {
   if (me) {
     return (
       <span className="flex items-center gap-1.5 rounded-full bg-ink-100 px-3 py-1.5 text-xs font-bold text-ink-900">
-        <span aria-hidden="true">👤</span>
+        <CircleUserRound className="h-4 w-4 text-ink-600" aria-hidden="true" />
         <span className="max-w-28 truncate">{me.name}</span>
       </span>
     );

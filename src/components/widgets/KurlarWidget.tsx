@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleDollarSign } from "lucide-react";
 import { getExchangeRates, type Rate } from "@/lib/widgets/doviz";
 import { KurCevirici } from "./KurCevirici";
 
@@ -40,7 +41,10 @@ export async function KurlarWidget({ withConverter = true }: { withConverter?: b
   return (
     <section aria-label="Döviz kurları" className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-ink-200/70">
       <div className="mb-3 flex items-center justify-between border-b-2 border-ink-900 pb-2">
-        <h2 className="text-base font-black uppercase text-ink-900">💱 Döviz &amp; Altın</h2>
+        <h2 className="flex items-center gap-2 text-base font-black uppercase text-ink-900">
+          <CircleDollarSign className="h-5 w-5 text-emerald-600" aria-hidden="true" />
+          Döviz &amp; Altın
+        </h2>
         <Link href="/doviz-kurlari" className="text-xs font-bold uppercase text-ink-500 transition hover:text-brand-600">
           Tümü →
         </Link>

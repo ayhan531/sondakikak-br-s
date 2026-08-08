@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CircleDollarSign } from "lucide-react";
 import { getExchangeRates, type Rate } from "@/lib/widgets/doviz";
 import { KurCevirici } from "@/components/widgets/KurCevirici";
 import { AdSlot } from "@/components/ads/AdSlot";
@@ -69,7 +70,10 @@ export default async function DovizKurlariPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-black text-ink-900 sm:text-3xl">💱 Döviz Kurları &amp; Altın</h1>
+        <h1 className="flex items-center gap-3 text-2xl font-black text-ink-900 sm:text-3xl">
+          <CircleDollarSign className="h-8 w-8 text-emerald-600" aria-hidden="true" />
+          Döviz Kurları &amp; Altın
+        </h1>
         <p className="mt-2 text-sm text-ink-600">
           Canlı piyasa verileri — dakikada bir güncellenir.
           {data?.updatedAt ? ` Son güncelleme: ${data.updatedAt}` : ""}

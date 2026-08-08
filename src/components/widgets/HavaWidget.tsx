@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { CloudSun } from "lucide-react";
 import { getWeather } from "@/lib/widgets/hava";
+import { WeatherIcon } from "./WeatherIcon";
 
 /** Sağ sütun hava durumu kartı: 6 KKTC şehri, canlı Open-Meteo verisi. */
 export async function HavaWidget() {
@@ -9,7 +11,10 @@ export async function HavaWidget() {
   return (
     <section aria-label="Hava durumu" className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-ink-200/70">
       <div className="mb-3 flex items-center justify-between border-b-2 border-ink-900 pb-2">
-        <h2 className="text-base font-black uppercase text-ink-900">🌤️ Hava Durumu</h2>
+        <h2 className="flex items-center gap-2 text-base font-black uppercase text-ink-900">
+          <CloudSun className="h-5 w-5 text-sky-500" aria-hidden="true" />
+          Hava Durumu
+        </h2>
         <Link href="/hava-durumu" className="text-xs font-bold uppercase text-ink-500 transition hover:text-brand-600">
           Detay →
         </Link>
@@ -19,7 +24,7 @@ export async function HavaWidget() {
         {data.cities.map((city) => (
           <li key={city.city} className="flex items-center justify-between py-1.5">
             <span className="flex items-center gap-2 text-xs font-bold text-ink-900">
-              <span className="text-base" aria-hidden="true">{city.emoji}</span>
+              <WeatherIcon code={city.code} className="h-4 w-4" />
               {city.city}
             </span>
             <span className="text-xs font-semibold tabular-nums text-ink-600">

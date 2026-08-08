@@ -1,3 +1,5 @@
+import { Car, ExternalLink } from "lucide-react";
+
 /** Canlı trafik yoğunluğu bağlantıları (Google Haritalar gerçek zamanlı trafik katmanı). */
 
 const CITIES = [
@@ -10,8 +12,9 @@ const CITIES = [
 export function TrafikWidget() {
   return (
     <section aria-label="Trafik durumu" className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-ink-200/70">
-      <h2 className="mb-3 border-b-2 border-ink-900 pb-2 text-base font-black uppercase text-ink-900">
-        🚗 Canlı Trafik
+      <h2 className="mb-3 flex items-center gap-2 border-b-2 border-ink-900 pb-2 text-base font-black uppercase text-ink-900">
+        <Car className="h-5 w-5 text-orange-500" aria-hidden="true" />
+        Canlı Trafik
       </h2>
       <div className="grid grid-cols-2 gap-2">
         {CITIES.map((city) => (
@@ -20,9 +23,10 @@ export function TrafikWidget() {
             href={`https://www.google.com/maps/@${city.lat},${city.lon},13z/data=!5m1!1e1`}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg bg-ink-50 px-3 py-2 text-center text-xs font-bold text-ink-900 transition hover:bg-brand-600 hover:text-white"
+            className="flex items-center justify-center gap-1.5 rounded-lg bg-ink-50 px-3 py-2 text-xs font-bold text-ink-900 transition hover:bg-brand-600 hover:text-white"
           >
             {city.name}
+            <ExternalLink className="h-3 w-3 opacity-50" aria-hidden="true" />
           </a>
         ))}
       </div>

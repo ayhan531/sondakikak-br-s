@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Cross, Clock, Phone, MapPin } from "lucide-react";
 import { getDutyPharmacies } from "@/lib/widgets/eczane";
 import { AdSlot } from "@/components/ads/AdSlot";
 
@@ -18,7 +19,10 @@ export default async function NobetciEczanelerPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-black text-ink-900 sm:text-3xl">💊 Nöbetçi Eczaneler</h1>
+        <h1 className="flex items-center gap-3 text-2xl font-black text-ink-900 sm:text-3xl">
+          <Cross className="h-8 w-8 text-brand-600" aria-hidden="true" />
+          Nöbetçi Eczaneler
+        </h1>
         <p className="mt-2 text-sm text-ink-600">
           {data?.date ? `${data.date} tarihli` : "Bugünün"} KKTC nöbetçi eczane listesi. Veriler
           Kıbrıs Türk Eczacılar Birliği&apos;nin resmî listesinden canlı olarak alınır.
@@ -50,20 +54,27 @@ export default async function NobetciEczanelerPage() {
                   >
                     <h3 className="text-sm font-black text-ink-900">{pharmacy.name}</h3>
                     {pharmacy.hours && (
-                      <p className="mt-1 text-xs font-semibold text-ink-600">🕐 {pharmacy.hours}</p>
+                      <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-ink-600">
+                        <Clock className="h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+                        {pharmacy.hours}
+                      </p>
                     )}
                     {pharmacy.phone && (
                       <p className="mt-1 text-xs">
                         <a
                           href={`tel:${pharmacy.phone.replace(/[^\d+]/g, "")}`}
-                          className="font-bold text-brand-600"
+                          className="flex items-center gap-1.5 font-bold text-brand-600"
                         >
-                          📞 {pharmacy.phone}
+                          <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          {pharmacy.phone}
                         </a>
                       </p>
                     )}
                     {pharmacy.address && (
-                      <p className="mt-1 text-xs text-ink-500">📍 {pharmacy.address}</p>
+                      <p className="mt-1 flex items-start gap-1.5 text-xs text-ink-500">
+                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-400" aria-hidden="true" />
+                        {pharmacy.address}
+                      </p>
                     )}
                   </article>
                 ))}

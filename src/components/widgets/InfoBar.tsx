@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Cross } from "lucide-react";
 import { getExchangeRates } from "@/lib/widgets/doviz";
 import { getWeather } from "@/lib/widgets/hava";
+import { WeatherIcon } from "./WeatherIcon";
 
 function fmt(value: number) {
   return new Intl.NumberFormat("tr-TR", {
@@ -23,7 +25,7 @@ export async function InfoBar() {
       <div className="scrollbar-thin mx-auto flex max-w-7xl items-center gap-4 overflow-x-auto px-4 py-1.5 text-xs font-semibold text-ink-700">
         {lefkosa && (
           <Link href="/hava-durumu" className="flex shrink-0 items-center gap-1.5 transition hover:text-brand-600">
-            <span aria-hidden="true">{lefkosa.emoji}</span>
+            <WeatherIcon code={lefkosa.code} className="h-4 w-4" />
             <span>
               {lefkosa.city} {lefkosa.temperature}°
             </span>
@@ -57,7 +59,7 @@ export async function InfoBar() {
           href="/nobetci-eczaneler"
           className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-brand-600/10 px-2.5 py-0.5 font-bold text-brand-700 transition hover:bg-brand-600 hover:text-white"
         >
-          <span aria-hidden="true">💊</span> Nöbetçi Eczaneler
+          <Cross className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" /> Nöbetçi Eczaneler
         </Link>
       </div>
     </div>

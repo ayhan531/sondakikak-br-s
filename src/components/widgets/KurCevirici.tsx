@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowLeftRight } from "lucide-react";
 
 type ConverterRate = { code: string; name: string; selling: number };
 
@@ -47,9 +48,9 @@ export function KurCevirici({ rates }: { rates: ConverterRate[] }) {
           type="button"
           onClick={swap}
           aria-label="Birimleri değiştir"
-          className="shrink-0 rounded-lg border border-ink-200 bg-white px-2 py-1.5 text-xs font-bold text-ink-600 transition hover:border-brand-600 hover:text-brand-600"
+          className="shrink-0 rounded-lg border border-ink-200 bg-white px-2 py-2 text-ink-600 transition hover:border-brand-600 hover:text-brand-600"
         >
-          ⇄
+          <ArrowLeftRight className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
         <select value={to} onChange={(e) => setTo(e.target.value)} aria-label="Hedef para birimi" className={selectClass}>
           {options.map((o) => (
