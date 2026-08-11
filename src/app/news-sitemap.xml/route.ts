@@ -2,7 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { xmlEscape, xmlResponse } from "@/lib/xml";
 
-export const revalidate = 300;
+// Statik ISR, build anındaki boş geçici veritabanıyla üretilip deploy sonrası
+// birkaç dakika boş kalıyordu; her istekte canlı veriden üretiyoruz.
+export const dynamic = "force-dynamic";
 
 /**
  * Google News site haritası: yalnızca son 48 saatin haberlerini içerir
