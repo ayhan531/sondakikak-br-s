@@ -53,7 +53,8 @@ async function main() {
   await sharp(mark).resize(192, 192).png().toFile(path.join(PUBLIC_DIR, "icon-192.png"));
   await sharp(mark).resize(512, 512).png().toFile(path.join(PUBLIC_DIR, "icon-512.png"));
   await sharp(mark).resize(180, 180).png().toFile(path.join(APP_DIR, "apple-icon.png"));
-  await sharp(mark).resize(32, 32).png().toFile(path.join(APP_DIR, "icon.png"));
+  // Google, arama sonuçlarında en az 48x48 favicon istiyor; 32x32 bu eşiğin altındaydı.
+  await sharp(mark).resize(96, 96).png().toFile(path.join(APP_DIR, "icon.png"));
 
   // Sosyal medya paylaşım görseli
   await sharp(Buffer.from(OG_SVG)).png().toFile(path.join(APP_DIR, "opengraph-image.png"));
