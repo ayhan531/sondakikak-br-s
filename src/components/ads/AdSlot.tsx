@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { AdRender } from "./AdRender";
+import { HouseAd } from "./HouseAd";
 
 export type Placement =
   | "header"
@@ -61,8 +62,9 @@ export async function AdSlot({
     },
   });
 
-  if (!ad) return null;
-  if (ad.type === "html" ? !ad.htmlCode : !ad.imageUrl) return null;
+  if (!ad || (ad.type === "html" ? !ad.htmlCode : !ad.imageUrl)) {
+    return <HouseAd className={className} />;
+  }
 
   return <AdRender ad={ad} className={className} />;
 }

@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS = {
   contactEmail: "info@sondakikakibris.com",
   contactPhone: "",
   contactAddress: "Lefkoşa, Kuzey Kıbrıs",
+  adsWhatsapp: "",
 
   facebookUrl: "",
   twitterUrl: "",

@@ -28,6 +28,11 @@ const GROUPS = [
       { key: "contactEmail", label: "E-posta" },
       { key: "contactPhone", label: "Telefon" },
       { key: "contactAddress", label: "Adres" },
+      {
+        key: "adsWhatsapp",
+        label: "Reklam WhatsApp Numarası",
+        hint: "Ülke koduyla, örn: +905391379363. Sitedeki 'Buraya Reklam Verebilirsiniz' banner'ında kullanılır.",
+      },
     ],
   },
   {
