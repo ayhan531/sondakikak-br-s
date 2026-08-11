@@ -59,3 +59,41 @@ export async function pingSearchEngines(urls: string[]) {
     });
   }
 }
+
+/**
+ * Düzenli besleme duyurusu: yeni haber olsun olmasın her döngüde (15 dk) çağrılır.
+ * Site sürekli güncellendiği için ana sayfa + son haberler + sitemap'ler
+ * arama motorlarına "içerik değişti" olarak bildirilir.
+ */
+export async function pingFeeds() {
+  const settings = await getSettings();
+  const base = settings.siteUrl.replace(/\/$/, "");
+  let host: string;
+  try {
+    host = new URL(base).host;
+  } catch {
+    return;
+  }
+  if (host.includes("localhost") || host.includes("127.0.0.1")) return;
+
+  // IndexNow: sürekli değişen sayfalar (Bing/Yandex anında tarar)
+  await quietFetch("https://api.indexnow.org/indexnow", {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({
+      host,
+      key: INDEXNOW_KEY,
+      keyLocation: `${base}/indexnow-key.txt`,
+      urlList: [`${base}/`, `${base}/son-haberler`],
+    }),
+  });
+
+  // WebSub: Google'ın hub'ına besleme güncellemesi duyur
+  for (const feed of [`${base}/rss.xml`, `${base}/news-sitemap.xml`, `${base}/sitemap.xml`]) {
+    await quietFetch("https://pubsubhubbub.appspot.com/", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ "hub.mode": "publish", "hub.url": feed }).toString(),
+    });
+  }
+}

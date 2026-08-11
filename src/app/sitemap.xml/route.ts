@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { xmlEscape, xmlResponse } from "@/lib/xml";
 
-export const revalidate = 3600;
+// 15 dakikada bir tazelenir; zamanlayıcı da aynı aralıkta arama motorlarına duyurur
+export const revalidate = 900;
 
 /** Haber sayfaları bu boyutta parçalara bölünür (Google sınırı 50.000). */
 export const ARTICLES_PER_SITEMAP = 5000;

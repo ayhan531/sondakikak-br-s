@@ -35,6 +35,10 @@ export async function register() {
       console.log(
         `[zamanlayıcı] ${summary.created} yeni haber eklendi (${summary.sources} kaynak).`
       );
+
+      // Her döngüde arama motorlarına besleme/sitemap güncellemesini duyur
+      const { pingFeeds } = await import("@/lib/seo-ping");
+      await pingFeeds();
     } catch (error) {
       console.error("[zamanlayıcı] Haber çekme hatası:", error);
     } finally {

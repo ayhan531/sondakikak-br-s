@@ -28,6 +28,9 @@ export async function generateMetadata(): Promise<Metadata> {
     description: settings.siteDescription,
     keywords: settings.siteKeywords.split(",").map((word) => word.trim()),
     applicationName: settings.siteName,
+    category: "news",
+    publisher: settings.siteName,
+    formatDetection: { telephone: false },
     referrer: "origin-when-cross-origin",
     alternates: {
       canonical: "/",

@@ -55,6 +55,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: article.metaDescription || article.summary,
       images: image ? [image] : undefined,
     },
+    // Google Haberler'in başlık eşleştirmesi için ek anahtar kelimeler
+    other: article.keywords ? { news_keywords: article.keywords } : undefined,
   };
 }
 
@@ -161,7 +163,7 @@ export default async function ArticlePage({ params }: PageProps) {
       <script
         type="application/ld+json"
         // Yapısal veri kendi verimizden üretiliyor
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <ViewTracker articleId={article.id} />
 
